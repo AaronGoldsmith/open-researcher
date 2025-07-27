@@ -1,0 +1,5 @@
+{
+  "name": "Multi-Agent Research System",
+  "description": "A UI-driven, multi-agent research system that can run locally using Ollama, remotely using Gemini, or in a hybrid mode. Orchestrate agents to define goals, conduct research, and synthesize findings into a structured report.",
+  "requestFramePermissions": []
+}
