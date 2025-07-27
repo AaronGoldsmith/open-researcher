@@ -26,9 +26,7 @@ export interface LogEntry {
 }
 
 export interface SourceDocument {
-  title: string;
-  url: string;
-  snippet: string;
+  sources: ResearchResult[];
   summary: string;
   topic: string;
   timestamp: string;
