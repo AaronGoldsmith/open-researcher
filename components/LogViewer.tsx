@@ -1,6 +1,6 @@
-
-import React, { useRef, useEffect } from 'react';
-import { LogEntry, ResearchResult } from '../types';
+import React, { useRef, useEffect, useState } from 'react';
+import { LogEntry, ResearchResult, SourceDocumentLogEntry } from '../types';
+import SourceDocumentModal from './SourceDocumentModal';
 
 interface LogViewerProps {
   title: string;
@@ -9,6 +9,7 @@ interface LogViewerProps {
 
 const LogViewer: React.FC<LogViewerProps> = ({ title, logs }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [selectedDocument, setSelectedDocument] = useState<SourceDocument | null>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -16,13 +17,23 @@ const LogViewer: React.FC<LogViewerProps> = ({ title, logs }) => {
     }
   }, [logs]);
 
+  const handleDocumentClick = (log: SourceDocumentLogEntry) => {
+    setSelectedDocument(log.data.sourceData);
+  };
+
+  const closeModal = () => {
+    setSelectedDocument(null);
+  };
+
   return (
     <div className="bg-gray-900 rounded-lg p-4 h-96 flex flex-col">
       <h4 className="text-md font-bold mb-3 text-white border-b border-gray-700 pb-2">{title}</h4>
       <div ref={scrollRef} className="flex-1 overflow-y-auto text-sm space-y-3">
         {logs.map((log, index) => (
           <div key={index} className="text-gray-400 font-mono">
-            <p>{log.message}</p>
+            <div onClick={() => handleDocumentClick(log as SourceDocumentLogEntry)} className="cursor-pointer">
+              <p>{log.message}</p>
+            </div>
             {log.data && log.data.results && (
               <div className="mt-2 pl-4 border-l-2 border-gray-600 space-y-2">
                 {(log.data.results as ResearchResult[]).map((res, i) => (
@@ -36,6 +47,9 @@ const LogViewer: React.FC<LogViewerProps> = ({ title, logs }) => {
           </div>
         ))}
       </div>
+      {selectedDocument && (
+        <SourceDocumentModal document={selectedDocument} onClose={closeModal} />
+      )}
     </div>
   );
 };

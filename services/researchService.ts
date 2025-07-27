@@ -1,4 +1,3 @@
-
 import { AgentName, LogEntry, Settings, ResearchResult } from '../types';
 import { runGeminiAgent } from './geminiService';
 import { runOllamaAgent, runTavilySearch, runLocalSearch } from './mockApiService';
@@ -111,14 +110,16 @@ export const startResearchProcess = async ({
   checkAborted(signal);
   createLog('supervisor', 'Breaking down research topic into sub-assignments...');
   await delay(1000);
-  const supervisorPrompt = `Based on the topic "${settings.researchTopic}", break it down into 3 to 5 distinct sub-topics for a team of specialized researchers. Your output **MUST** be a JSON array of strings, where each string is a detailed, self-contained research assignment. Do not include any other text or explanation.
+  const supervisorPrompt = `Based on the overall research domain "${settings.researchTopic}", break it down into 3 to 5 distinct, self-contained **research sub-topics**. These sub-topics should represent fundamental areas of inquiry or investigation within the main domain, suitable for specialized academic researchers.
+
+Your output **MUST** be a JSON array of strings, where each string is a detailed, self-contained research assignment. Do not include any other tasks, text, or explanation.
 
 Example for "The Future of Electric Vehicles":
 [
-  "Investigate the latest advancements in battery technology, including solid-state batteries, and their impact on EV range and charging times.",
-  "Research the current state and future expansion of global EV charging infrastructure, including challenges and government incentives.",
-  "Analyze the environmental impact of EV manufacturing, focusing on battery production and disposal, and compare it to traditional vehicles.",
-  "Explore the development of autonomous driving technology in EVs and the regulatory and ethical hurdles to widespread adoption."
+  "Investigate the technological advancements and limitations of next-generation battery chemistries (e.g., solid-state, lithium-sulfur) and their projected impact on EV performance metrics.",
+  "Analyze the socio-economic and infrastructural challenges hindering the widespread adoption of EV charging networks, including policy interventions and innovative business models.",
+  "Evaluate the cradle-to-grave environmental footprint of electric vehicles, specifically focusing on critical mineral extraction, battery manufacturing, recycling processes, and comparison with internal combustion engine vehicles.",
+  "Research the ethical and regulatory considerations surrounding the integration of autonomous driving capabilities in EVs, including liability frameworks, public acceptance, and data privacy concerns."
 ]`;
   const researchPlanResponse = await runAgent('supervisor', supervisorPrompt);
   
@@ -175,13 +176,26 @@ Example for "The Future of Electric Vehicles":
           for (const result of searchResults.results) {
               checkAborted(signal);
               const summaryPrompt = `For the research topic: "${topic}", summarize the following text concisely.
-                    Start the summary by integrating 1-3 direct, impactful quotes from the source that best capture its main thrust.
-                    Ensure the entire summary, including the quotes, is directly relevant to "${settings.researchTopic}" and extracts only the most critical information.
-                    Aim for a summary of approximately 5-7 sentences.\n\n${result.snippet}`
+          Start the summary by integrating 1-3 direct, impactful quotes from the source that best capture its main thrust.
+          Ensure the entire summary, including the quotes, is directly relevant to "${settings.researchTopic}" and extracts only the most critical information.
+          Aim for a summary of approximately 5-7 sentences.\n\n${result.snippet}`
               const summary = await runAgent('researcher', summaryPrompt);
               const note = `Source: ${result.title} (${result.url})\nSummary: ${summary}`;
               topicNotes.push(note);
-              createResearcherLog(`Collected summary for "${result.title}"`);
+              
+              // Create a special log entry with source document data
+              createLog('researcher', `📄 New source found: "${result.title}"`, {
+                  type: 'sourceDocument',
+                  sourceData: {
+                      title: result.title,
+                      url: result.url,
+                      snippet: result.snippet,
+                      summary: summary,
+                      topic: topic,
+                      timestamp: new Date().toISOString()
+                  }
+              });
+              
               console.log(`Collected note: ${note}`);
               await delay(200);
           }
@@ -203,10 +217,10 @@ Example for "The Future of Electric Vehicles":
   await delay(1000);
   
   const researchNotesString = researchNotes.join('\n\n---\n\n');
-  const finalSourceList = researchNotes.map((note, idx) => {
+  const finalSourceList = researchNotes.map(note => {
       const titleMatch = note.match(/Source: (.*?)\s\((.*?)\)/);
       if (titleMatch && titleMatch[1] && titleMatch[2]) {
-          return `- [${idx + 1}] [${titleMatch[1]}](${titleMatch[2]})`;
+          return `- [${titleMatch[1]}](${titleMatch[2]})`;
       }
       return '';
   }).filter(Boolean).join('\n');
@@ -222,8 +236,8 @@ ${researchNotesString}
 
 **Instructions:**
 - Write in clear, well-structured Markdown. Use headings, topics, and sub-topics to organize the content. Aim for a report length of approximately 1500-2000 words.
-- **Crucially, you must cite your sources.** When you use information from a research note, add an inline citation using the source index at the end of the paragraph, like this: ([1](https://example.com/article-url], [2](https://example.com/article-url).
-- At the end of the report, you **MUST** include a "## Sources" section. This section must **ONLY** contain the following sources, formatted exactly as the bulleted list provided. Do not add, remove, or change any sources from this list.
+- **Crucially, you must cite your sources.** When you use information from a research note, add an inline citation using the source index at the end of the paragraph".
+- At the end of the report, you **MUST** include a "## Sources" section. This section must **ONLY** contain the following sources, formatted as the bulleted list provided.
 
 **Allowed Sources:**
 ${finalSourceList || 'No sources found.'}`;
