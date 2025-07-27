@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { LogEntry, ResearchResult, SourceDocumentLogEntry } from '../types';
+import { LogEntry, ResearchResult, SourceDocument, SourceDocumentLogEntry } from '../types';
 import SourceDocumentModal from './SourceDocumentModal';
 
 interface LogViewerProps {
@@ -31,9 +31,11 @@ const LogViewer: React.FC<LogViewerProps> = ({ title, logs }) => {
       <div ref={scrollRef} className="flex-1 overflow-y-auto text-sm space-y-3">
         {logs.map((log, index) => (
           <div key={index} className="text-gray-400 font-mono">
-            <div onClick={() => handleDocumentClick(log as SourceDocumentLogEntry)} className="cursor-pointer">
-              <p>{log.message}</p>
-            </div>
+            {log.data?.type === 'sourceDocument' ? (
+              <div onClick={() => handleDocumentClick(log as SourceDocumentLogEntry)} className="cursor-pointer">
+                <p>{log.message}</p>     
+              </div>
+            ) : (<div> <p>{log.message}</p></div>)}
             {log.data && log.data.results && (
               <div className="mt-2 pl-4 border-l-2 border-gray-600 space-y-2">
                 {(log.data.results as ResearchResult[]).map((res, i) => (
