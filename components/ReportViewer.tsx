@@ -12,6 +12,7 @@ declare var html2canvas: any;
 interface ReportViewerProps {
   report: string;
   logs: LogEntry[];
+  researchTopic: string;
 }
 
 const MarkdownRenderer: React.FC<{ content: string }> = ({ content }) => {
@@ -83,8 +84,21 @@ const MarkdownRenderer: React.FC<{ content: string }> = ({ content }) => {
 };
 
 
-const ReportViewer: React.FC<ReportViewerProps> = ({ report, logs }) => {
+const ReportViewer: React.FC<ReportViewerProps> = ({ report, logs, researchTopic }) => {
   const reportRef = useRef<HTMLDivElement>(null);
+
+  // Helper function to create a safe filename from the research topic
+  const createSafeFilename = (topic: string, extension: string): string => {
+    const safeTitle = topic
+      .replace(/[^a-zA-Z0-9\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+      .toLowerCase()
+      .substring(0, 50); // Limit length to 50 characters
+    
+    const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    return `${safeTitle}-${timestamp}.${extension}`;
+  };
 
   const exportToFile = (content: string, filename: string, type: string) => {
     const blob = new Blob([content], { type });
@@ -97,11 +111,13 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, logs }) => {
   };
 
   const handleExportMD = () => {
-    exportToFile(report, 'research-report.md', 'text/markdown');
+    const filename = createSafeFilename(researchTopic, 'md');
+    exportToFile(report, filename, 'text/markdown');
   };
 
   const handleExportJSON = () => {
-    exportToFile(JSON.stringify({ report, logs }, null, 2), 'research-log.json', 'application/json');
+    const filename = createSafeFilename(researchTopic, 'json');
+    exportToFile(JSON.stringify({ report, logs }, null, 2), filename, 'application/json');
   };
 
   const handleExportPDF = async () => {

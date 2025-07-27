@@ -109,6 +109,7 @@ const App: React.FC = () => {
           finalReport={finalReport}
           researchState={researchState}
           error={error}
+          researchTopic={settings.researchTopic}
         />
       </main>
     </div>

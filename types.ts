@@ -1,4 +1,3 @@
-
 export type AgentName = 'supervisor' | 'researcher' | 'writer';
 
 export type ResearchState = 'idle' | 'running' | 'stopped' | 'completed' | 'error';
@@ -22,8 +21,22 @@ export interface Settings {
 export interface LogEntry {
   agent: AgentName;
   message: string;
-  timestamp: string;
   data?: any;
+  timestamp: string;
+}
+
+export interface SourceDocument {
+  sources: ResearchResult[];
+  summary: string;
+  topic: string;
+  timestamp: string;
+}
+
+export interface SourceDocumentLogEntry extends LogEntry {
+  data: {
+    type: 'sourceDocument';
+    sourceData: SourceDocument;
+  };
 }
 
 export interface ResearchResult {

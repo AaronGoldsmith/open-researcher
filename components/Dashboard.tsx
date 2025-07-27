@@ -12,6 +12,7 @@ interface DashboardProps {
   finalReport: string;
   researchState: ResearchState;
   error: string | null;
+  researchTopic: string;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({
@@ -21,6 +22,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   finalReport,
   researchState,
   error,
+  researchTopic,
 }) => {
   const supervisorLogs = logs.filter(log => log.agent === 'supervisor');
   const researcherLogs = logs.filter(log => log.agent === 'researcher');
@@ -69,7 +71,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <LogViewer title="Writer" logs={writerLogs} />
             </div>
             {showReport && (
-                <ReportViewer report={finalReport} logs={logs} />
+                <ReportViewer report={finalReport} logs={logs} researchTopic={researchTopic} />
             )}
           </div>
         )}
